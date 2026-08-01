@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Backdrop Studio — Replace Backgrounds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #16121a;
+    --bg-soft: #1f1a24;
+    --panel: #241f2b;
+    --panel-line: #362f3f;
+    --coral: #ff6b52;
+    --coral-soft: #ffab8f;
+    --teal: #49d8c4;
+    --ink: #f4efe9;
+    --ink-dim: #b7aebd;
+    --ink-faint: #7c7285;
+    --radius: 18px;
+    --radius-sm: 10px;
+    --shadow: 0 20px 60px -20px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(255,107,82,.15), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(73,216,196,.10), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Fraunces',serif;}
+  a{color:inherit;}
+  ::selection{background:var(--coral); color:#1a1013;}
+
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px;
+    background:rgba(22,18,26,.82);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--panel-line);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:.2px;}
+  .brand-mark{
+    width:32px;height:32px;border-radius:9px;
+    background:linear-gradient(135deg, var(--coral), #ff9a6b);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px -4px rgba(255,107,82,.55);
+    flex:none;
+  }
+  .brand-mark svg{width:18px;height:18px;}
+  nav.tabs{display:flex; gap:6px; background:var(--bg-soft); padding:4px; border-radius:999px; border:1px solid var(--panel-line);}
+  nav.tabs button{
+    border:none; background:transparent; color:var(--ink-dim);
+    font:600 13px/1 'Inter',sans-serif; padding:9px 16px; border-radius:999px; cursor:pointer;
+    transition:.18s ease;
+  }
+  nav.tabs button.active{background:var(--coral); color:#1a1013;}
+  nav.tabs button:not(.active):hover{color:var(--ink);}
+
+  main{max-width:760px; margin:0 auto; padding:28px 20px 90px;}
+  .view{display:none;}
+  .view.active{display:block; animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+  .page-head{margin:6px 0 22px;}
+  .page-head h1{font-size:clamp(26px,4vw,34px); margin:0 0 6px; font-weight:600;}
+  .page-head p{color:var(--ink-dim); font-size:15px; margin:0;}
+
+  .btn{
+    font:600 14px/1 'Inter',sans-serif; padding:14px 22px; border-radius:12px; border:1px solid transparent;
+    cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:.15s ease;
+  }
+  .btn-primary{background:var(--coral); color:#1a1013;}
+  .btn-primary:hover{background:#ff7c63; transform:translateY(-1px);}
+  .btn-ghost{background:transparent; color:var(--ink); border-color:var(--panel-line);}
+  .btn-ghost:hover{border-color:var(--ink-faint);}
+  .btn:disabled{opacity:.45; cursor:not-allowed; transform:none !important;}
+  .btn-sm{padding:9px 14px; font-size:13px; border-radius:9px;}
+
+  .panel{background:var(--panel); border:1px solid var(--panel-line); border-radius:var(--radius); padding:22px;}
+  .section-title{display:flex; align-items:baseline; gap:10px; margin:0 0 4px;}
+  .section-title .num{font:600 12px/1 'Inter',sans-serif; color:var(--ink-faint);}
+  .section-sub{color:var(--ink-faint); font-size:13.5px; margin:0 0 16px;}
+
+  .dropzone{
+    border:1.5px dashed var(--panel-line); border-radius:var(--radius-sm); padding:36px 18px;
+    text-align:center; cursor:pointer; transition:.15s ease; background:var(--bg-soft);
+  }
+  .dropzone:hover, .dropzone.drag{border-color:var(--coral); background:rgba(255,107,82,.06);}
+  .dropzone svg{width:30px;height:30px; color:var(--coral); margin-bottom:10px;}
+  .dropzone .lbl{font-weight:600; font-size:14.5px; margin-bottom:4px;}
+  .dropzone .sub{color:var(--ink-faint); font-size:12.5px;}
+  input[type=file]{display:none;}
+
+  .canvas-wrap{
+    position:relative; border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--panel-line);
+    background:repeating-conic-gradient(#2b2530 0% 25%, #211c26 0% 50%) 0 0/20px 20px;
+    display:flex; align-items:center; justify-content:center; min-height:260px;
+  }
+  .canvas-wrap img{max-width:100%; max-height:520px; display:block; margin:0 auto;}
+  .canvas-wrap .empty{color:var(--ink-faint); font-size:13.5px; padding:40px;}
+
+  .progress{height:6px; border-radius:99px; background:var(--bg-soft); overflow:hidden; margin-top:12px; display:none; position:relative;}
+  .progress.show{display:block;}
+  .progress > i{position:absolute; top:0; bottom:0; width:40%; border-radius:99px; background:linear-gradient(90deg,var(--coral),var(--teal));
+    animation:indeterminate 1.2s ease-in-out infinite;}
+  @keyframes indeterminate{0%{left:-40%}100%{left:100%}}
+  .status-line{font-size:12.5px; color:var(--ink-faint); margin-top:8px; min-height:16px;}
+
+  .field-label{font:600 12.5px/1 'Inter',sans-serif; color:var(--ink-dim); margin:16px 0 8px; display:flex; justify-content:space-between;}
+  .search-input, textarea{
+    width:100%; background:var(--bg-soft); border:1px solid var(--panel-line); border-radius:10px;
+    padding:11px 13px; color:var(--ink); font:400 13.5px/1.4 'Inter',sans-serif; outline:none; resize:vertical;
+  }
+  .search-input:focus, textarea:focus{border-color:var(--coral);}
+
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 4px;}
+  .chip{
+    font:500 12px/1 'Inter',sans-serif; padding:9px 13px; border-radius:999px; border:1px solid var(--panel-line);
+    background:var(--bg-soft); color:var(--ink-dim); cursor:pointer; transition:.15s ease; max-width:220px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .chip:hover{border-color:var(--coral); color:var(--ink);}
+
+  .actions-row{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;}
+
+  footer.note{font-size:12px; color:var(--ink-faint); margin-top:26px; line-height:1.6; border-top:1px solid var(--panel-line); padding-top:16px;}
+
+  .gallery-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-top:20px;}
+  .g-card{background:var(--panel); border:1px solid var(--panel-line); border-radius:14px; overflow:hidden;}
+  .g-card img{width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:repeating-conic-gradient(#2b2530 0% 25%, #211c26 0% 50%) 0 0/20px 20px;}
+  .g-card .g-body{padding:12px 14px 14px;}
+  .g-card .g-title{font-size:12.5px; color:var(--ink-dim); margin:0 0 10px; line-height:1.4; max-height:34px; overflow:hidden;}
+  .g-card .g-actions{display:flex; gap:8px;}
+  .g-card .g-actions button{flex:1;}
+  .icon-btn{background:var(--bg-soft); border:1px solid var(--panel-line); color:var(--ink-dim);}
+  .icon-btn:hover{color:var(--coral); border-color:var(--coral);}
+  .empty-state{text-align:center; padding:70px 20px; color:var(--ink-faint);}
+  .empty-state svg{width:34px;height:34px; margin-bottom:12px; color:var(--panel-line);}
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(120%);
+    background:#1a1013; color:#fff; border:1px solid var(--coral); padding:12px 18px; border-radius:11px;
+    font-size:13px; font-weight:600; z-index:100; transition:transform .3s ease; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:8px;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 12c2-5 6-8 8-8s6 3 8 8-6 8-8 8-6-3-8-8Z" stroke="#1a1013" stroke-width="1.8"/></svg>
+    </span>
+    Backdrop Studio
+  </div>
+  <nav class="tabs">
+    <button class="active" data-view="editor">Editor</button>
+    <button data-view="gallery">Gallery</button>
+  </nav>
+</div>
+
+<main>
+
+  <!-- ============ EDITOR VIEW ============ -->
+  <section class="view active" id="view-editor">
+    <div class="page-head">
+      <h1>Editor</h1>
+      <p>Upload a photo, describe a background, and generate.</p>
+    </div>
+
+    <div class="panel">
+      <div class="dropzone" id="dropzone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        <div class="lbl">Drop a photo, or click to browse</div>
+        <div class="sub">JPG, PNG, or WEBP.</div>
+        <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp" />
+      </div>
+
+      <div class="canvas-wrap" id="photoWrap" style="margin-top:16px; display:none;">
+        <img id="photoPreview" alt="Your photo" />
+      </div>
+
+      <div class="field-label" style="margin-top:20px;">New background</div>
+      <textarea id="genPrompt" rows="2" placeholder="e.g. 'a cinematic Tokyo alley at night with neon signs'"></textarea>
+
+      <div class="chip-row" id="chipRow"></div>
+
+      <div class="actions-row">
+        <button class="btn btn-primary" id="genBtn" type="button" disabled>✨ Generate</button>
+        <button class="btn btn-ghost" id="resetBtn" type="button">↺ Reset</button>
+      </div>
+
+      <div class="progress" id="progressBar"><i></i></div>
+      <div class="status-line" id="genStatus"></div>
+    </div>
+
+    <!-- result -->
+    <div class="panel" style="margin-top:22px;">
+      <div class="canvas-wrap" id="resultWrap" style="min-height:320px;">
+        <div class="empty" id="resultEmpty">Your finished edit will appear here</div>
+        <img id="resultImg" style="display:none;" alt="Generated result" />
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary" id="saveGalleryBtn" disabled>💾 Save to gallery</button>
+        <button class="btn btn-ghost" id="downloadBtn" disabled>⬇ Download</button>
+      </div>
+    </div>
+
+    <footer class="note">
+      Generation calls Stability AI's Replace Background &amp; Relight model through this app's own server, so your subject is preserved and lit to match the new scene automatically. No API key needed on your end — it's kept securely on the server, never sent to your browser.
+    </footer>
+  </section>
+
+  <!-- ============ GALLERY VIEW ============ -->
+  <section class="view" id="view-gallery">
+    <div class="page-head" style="margin-top:10px;"><h1 style="margin:0;font-size:26px;">Gallery</h1><p>Everything you've saved this session.</p></div>
+    <div id="galleryEmpty" class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="9" r="1.6"/><path d="M21 15l-5-5-9 9"/></svg>
+      <div>No saved edits yet — generate a backdrop and hit <strong>Save to gallery</strong>.</div>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* ============================================================
+   Backdrop Studio — frontend
+   Talks only to this app's own backend (/api/generate-background).
+   The Stability AI key lives server-side and is never exposed here.
+   ============================================================ */
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+// ---------- nav ----------
+$$('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=> showView(btn.dataset.view));
+});
+function showView(name){
+  $$('.view').forEach(v=>v.classList.remove('active'));
+  $(`#view-${name}`).classList.add('active');
+  $$('nav.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+  if(name==='gallery') renderGallery();
+}
+
+// ---------- state ----------
+const state = { file: null, resultBlobUrl: null, resultDataURL: null };
+const gallery = []; // session-only, in-memory
+
+// ---------- quick suggestion chips ----------
+const SUGGESTIONS = [
+  'a cinematic Tokyo alley at night with neon signs',
+  'a soft studio backdrop with warm gradient light',
+  'a misty pine forest at dawn',
+  'a modern minimalist white interior',
+  'a tropical beach with turquoise water',
+  'outer space with distant nebulae'
+];
+const genPrompt = $('#genPrompt'), genBtn = $('#genBtn'), genStatus = $('#genStatus');
+const progressBar = $('#progressBar');
+const chipRow = $('#chipRow');
+SUGGESTIONS.forEach(text=>{
+  const chip = document.createElement('button');
+  chip.type = 'button'; chip.className = 'chip'; chip.textContent = text;
+  chip.title = text;
+  chip.addEventListener('click', ()=>{ genPrompt.value = text; genPrompt.focus(); });
+  chipRow.appendChild(chip);
+});
+
+// ---------- upload ----------
+const dropzone = $('#dropzone'), fileInput = $('#fileInput');
+dropzone.addEventListener('click', ()=> fileInput.click());
+['dragover','dragenter'].forEach(ev=> dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=> dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.classList.remove('drag');}));
+dropzone.addEventListener('drop', e=>{ if(e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e=>{ if(e.target.files[0]) handleUpload(e.target.files[0]); });
+
+function handleUpload(file){
+  if(!file.type.startsWith('image/')){ toast('Please choose an image file'); return; }
+  state.file = file;
+  const url = URL.createObjectURL(file);
+  $('#photoPreview').src = url;
+  $('#photoWrap').style.display = 'flex';
+  genBtn.disabled = false;
+  genStatus.textContent = '';
+}
+
+// ---------- generate (calls our own backend, no key needed here) ----------
+genBtn.addEventListener('click', async ()=>{
+  const prompt = genPrompt.value.trim();
+  if(!state.file){ toast('Upload a photo first'); return; }
+  if(!prompt){ genStatus.textContent = 'Describe the scene you want.'; return; }
+
+  genBtn.disabled = true;
+  progressBar.classList.add('show');
+  genStatus.textContent = 'Generating your new backdrop… (usually 10–30s)';
+
+  try{
+    const form = new FormData();
+    form.append('photo', state.file);
+    form.append('prompt', prompt);
+
+    const res = await fetch('/api/generate-background', { method: 'POST', body: form });
+    if(!res.ok){
+      let msg = `Request failed (${res.status})`;
+      try{ const j = await res.json(); if(j.error) msg = j.error; }catch(_){}
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    if(state.resultBlobUrl) URL.revokeObjectURL(state.resultBlobUrl);
+    state.resultBlobUrl = URL.createObjectURL(blob);
+    state.resultDataURL = await blobToDataURL(blob);
+
+    $('#resultImg').src = state.resultBlobUrl;
+    $('#resultImg').style.display = 'block';
+    $('#resultEmpty').style.display = 'none';
+    $('#saveGalleryBtn').disabled = false;
+    $('#downloadBtn').disabled = false;
+    genStatus.textContent = 'Ready ✓';
+    toast('Backdrop generated');
+  }catch(err){
+    console.error(err);
+    genStatus.textContent = err.message || 'Something went wrong. Please try again.';
+  }finally{
+    genBtn.disabled = false;
+    progressBar.classList.remove('show');
+  }
+});
+
+function blobToDataURL(blob){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+
+$('#resetBtn').addEventListener('click', ()=>{
+  state.file = null;
+  fileInput.value = '';
+  $('#photoWrap').style.display = 'none';
+  $('#photoPreview').src = '';
+  genPrompt.value = '';
+  genBtn.disabled = true;
+  genStatus.textContent = '';
+  $('#resultImg').style.display = 'none';
+  $('#resultEmpty').style.display = 'block';
+  $('#saveGalleryBtn').disabled = true;
+  $('#downloadBtn').disabled = true;
+});
+
+// ---------- download / save ----------
+$('#downloadBtn').addEventListener('click', ()=>{
+  if(!state.resultDataURL) return;
+  const a = document.createElement('a');
+  a.href = state.resultDataURL; a.download = 'backdrop-studio-edit.png'; a.click();
+});
+
+$('#saveGalleryBtn').addEventListener('click', ()=>{
+  if(!state.resultDataURL) return;
+  gallery.unshift({ img: state.resultDataURL, label: `"${genPrompt.value.trim()}"`, ts: new Date() });
+  toast('Saved to gallery');
+  renderGallery();
+});
+
+function renderGallery(){
+  const grid = $('#galleryGrid'), empty = $('#galleryEmpty');
+  grid.innerHTML='';
+  empty.style.display = gallery.length? 'none':'block';
+  gallery.forEach((item, idx)=>{
+    const card = document.createElement('div'); card.className='g-card';
+    const img = document.createElement('img'); img.src=item.img; card.appendChild(img);
+    const body = document.createElement('div'); body.className='g-body';
+    const title = document.createElement('p'); title.className='g-title';
+    title.textContent = `${item.label} — ${item.ts.toLocaleString()}`;
+    body.appendChild(title);
+    const actions = document.createElement('div'); actions.className='g-actions';
+    const dl = document.createElement('button'); dl.className='btn btn-sm icon-btn'; dl.textContent='⬇ Download';
+    dl.addEventListener('click', ()=>{ const a=document.createElement('a'); a.href=item.img; a.download=`backdrop-${idx}.png`; a.click(); });
+    const del = document.createElement('button'); del.className='btn btn-sm icon-btn'; del.textContent='🗑';
+    del.addEventListener('click', ()=>{ gallery.splice(idx,1); renderGallery(); });
+    actions.appendChild(dl); actions.appendChild(del);
+    body.appendChild(actions);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+}
+</script>
+</body>
+</html>
